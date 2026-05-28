@@ -11,6 +11,7 @@ Unreleased
  * Drop support for Python 3.9 (end of life)
  * Remove unused ``WAGTAIL_VERSION`` imports
  * Update docs extras to mkdocs >=1.6 and mkdocs-material >=9.5
+ * Upgrade node/npm packages, minor and patch versions
 
 0.11 (30.10.2025)
 ~~~~~~~~~~~~~~~~~
