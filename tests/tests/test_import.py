@@ -27,6 +27,19 @@ FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixture
 
 CUSTOM_LINK_TYPE_IDENTIFIERS = ("custom-link-notimplemented", "custom-link-none")
 
+
+class FakeOperation:
+    instance = object()
+
+    def __init__(self, name, dependencies, run_order):
+        self.name = name
+        self.dependencies = dependencies
+        self.run_order = run_order
+
+    def run(self, context):
+        self.run_order.append(self.name)
+
+
 class TestImport(TestCase):
     fixtures = ['test.json']
 
@@ -1989,6 +2002,25 @@ class TestImport(TestCase):
         # link from homepage has to be broken
         page = PageWithRichText.objects.get(slug="level-1-page")
         self.assertEqual(page.body, '<p>link to level 3</p>')
+
+    def test_retries_held_operations_for_satisfiable_soft_cycle(self):
+        run_order = []
+        dependency_model = object()
+        operation_a = FakeOperation("A", [(dependency_model, "B", True)], run_order)
+        operation_b = FakeOperation("B", [(dependency_model, "C", True)], run_order)
+        operation_c = FakeOperation("C", [(dependency_model, "A", False)], run_order)
+
+        importer = ImportPlanner(model="tests.category", source_site="staging")
+        importer.operations = [operation_a, operation_b, operation_c]
+        importer.resolutions = {
+            (dependency_model, "A"): operation_a,
+            (dependency_model, "B"): operation_b,
+            (dependency_model, "C"): operation_c,
+        }
+
+        importer.run()
+
+        self.assertEqual(run_order, ["C", "B", "A"])
 
     @mock.patch('requests.get')
     def test_import_custom_file_field(self, get):
