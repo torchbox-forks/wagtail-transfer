@@ -9,8 +9,11 @@ jobs:
       wagtail-version:
         default: "wagtail"
         type: string
+      django-version:
+        default: "django"
+        type: string
       python-version:
-        default: "3.12"
+        default: "3.13"
         type: string
     executor:
       name: python/default
@@ -18,11 +21,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-py<< parameters.python-version >>
-      - run: pip install "<< parameters.wagtail-version >>"
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-<< parameters.django-version >>-py<< parameters.python-version >>
+      - run: pip install "<< parameters.django-version >>" "<< parameters.wagtail-version >>"
       - run: pip install -e .
       - save_cache:
-          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-py<< parameters.python-version >>
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-<< parameters.django-version >>-py<< parameters.python-version >>
           paths:
             - "~/.cache/pip"
       - run:
@@ -30,7 +33,13 @@ jobs:
           name: Test
 
   nightly-wagtail-test:
-    executor: python/default
+    parameters:
+      python-version:
+        default: "3.13"
+        type: string
+    executor:
+      name: python/default
+      tag: "<< parameters.python-version >>"
     steps:
       - checkout
       - run: git clone git@github.com:wagtail/wagtail.git
@@ -45,11 +54,17 @@ workflows:
   main:
     jobs:
       - build-and-test:
-          wagtail-version: "wagtail>=5.2,<5.3"
-          python-version: "3.8"
+          wagtail-version: "wagtail>=6.3,<6.4"
+          django-version: "django>=4.2,<4.3"
+          python-version: "3.9"
       - build-and-test:
-          wagtail-version: "wagtail>=6.0,<6.1"
+          wagtail-version: "wagtail>=7.0,<7.1"
+          django-version: "django>=5.1,<5.2"
           python-version: "3.12"
+      - build-and-test:
+          wagtail-version: "wagtail>=7.1,<7.2"
+          django-version: "django>=5.2,<5.3"
+          python-version: "3.13"
   nightly:
     jobs:
       - nightly-wagtail-test
