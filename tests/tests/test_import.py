@@ -29,6 +29,7 @@ CUSTOM_LINK_TYPE_IDENTIFIERS = ("custom-link-notimplemented", "custom-link-none"
 
 
 class FakeOperation:
+    # run() checks isinstance(operation.instance, Page) before saving revisions
     instance = object()
 
     def __init__(self, name, dependencies, run_order):
@@ -2003,7 +2004,7 @@ class TestImport(TestCase):
         page = PageWithRichText.objects.get(slug="level-1-page")
         self.assertEqual(page.body, '<p>link to level 3</p>')
 
-    def test_retries_held_operations_for_satisfiable_soft_cycle(self):
+    def test_soft_dependency_closing_a_loop_is_left_unsatisfied(self):
         run_order = []
         dependency_model = object()
         operation_a = FakeOperation("A", [(dependency_model, "B", True)], run_order)
@@ -2062,6 +2063,7 @@ class TestImport(TestCase):
             "mappings": [
                 ["wagtailcore.page", 10, "10101010-0000-0000-0000-000000000000"],
                 ["wagtailcore.page", 11, "11111111-0000-0000-0000-000000000000"],
+                ["wagtailcore.page", 2, "22222222-2222-2222-2222-222222222222"],
                 ["wagtailcore.page", 31, "31313131-3131-3131-3131-313131313131"]
             ],
             "objects": [
@@ -2081,7 +2083,7 @@ class TestImport(TestCase):
                 {
                     "model": "tests.redirectpage",
                     "pk": 11,
-                    "parent_id": 10,
+                    "parent_id": 2,
                     "fields": {
                         "title": "redirect to unimported page",
                         "show_in_menus": false,
