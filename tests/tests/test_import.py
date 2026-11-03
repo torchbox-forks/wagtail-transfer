@@ -2026,10 +2026,10 @@ class TestImport(TestCase):
     def test_soft_dependency_on_unsatisfiable_operation_is_abandoned(self):
         # A softly depends on B (e.g. a rich text/streamfield link); B hard-depends
         # on C, which can never be resolved (simulating a NO_FOLLOW_MODELS target
-        # that's missing at the destination). B was only ever reachable via A's
-        # soft link, so the top-level satisfiability sweep never discovers that B
-        # is broken. B should be silently dropped rather than crashing, and A
-        # should still be created.
+        # that's missing at the destination). The satisfiability sweep marks B as
+        # unsatisfiable, so when ordering follows A's soft link it must leave that
+        # link unsatisfied rather than trying to order B. B should be silently
+        # dropped rather than crashing, and A should still be created.
         run_order = []
         dependency_model = object()
         operation_a = FakeOperation("A", [(dependency_model, "B", False)], run_order)
